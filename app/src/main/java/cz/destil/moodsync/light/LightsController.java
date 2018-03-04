@@ -1,19 +1,23 @@
 package cz.destil.moodsync.light;
 
-import android.graphics.Color;
+import java.io.IOException;
 
-import cz.destil.moodsync.R;
+import com.lifx.LifxCommander.ControlMethods;
+import com.lifx.LifxCommander.ReceiveMessages;
+import com.lifx.Messages.DataTypes.Command;
+import com.lifx.Messages.DataTypes.HSBK;
+import com.lifx.Messages.Device.GetService;
+import com.lifx.Messages.Light.SetPower_Light;
+import com.lifx.Messages.Light.SetWaveform;
+import com.lifx.Values.Power;
+import com.lifx.Values.Waveforms;
+
+import android.graphics.Color;
+import android.os.StrictMode;
 import cz.destil.moodsync.core.App;
 import cz.destil.moodsync.core.BaseAsyncTask;
 import cz.destil.moodsync.core.Config;
-import cz.destil.moodsync.event.ErrorEvent;
 import cz.destil.moodsync.event.SuccessEvent;
-import cz.destil.moodsync.util.Toas;
-import lifx.java.android.client.LFXClient;
-import lifx.java.android.entities.LFXHSBKColor;
-import lifx.java.android.entities.LFXTypes;
-import lifx.java.android.light.LFXTaggedLightCollection;
-import lifx.java.android.network_context.LFXNetworkContext;
 
 /**
  * Controller which controls LIFX lights.
@@ -24,10 +28,10 @@ public class LightsController {
 
     private static final int TIMEOUT = 5000;
     private static LightsController sInstance;
-    private LFXNetworkContext mNetworkContext;
     private boolean mWorkingFine;
     private boolean mDisconnected;
     private int mPreviousColor = -1;
+    private int port = 56700;
 
     public static LightsController get() {
         if (sInstance == null) {
@@ -38,7 +42,18 @@ public class LightsController {
 
     public void changeColor(int color) {
         if (mWorkingFine && color != mPreviousColor) {
-            mNetworkContext.getAllLightsCollection().setColorOverDuration(convertColor(color), Config.DURATION_OF_COLOR_CHANGE);
+            SetWaveform setWaveform = new SetWaveform();
+            setWaveform.setColor(convertColor(color));
+            setWaveform.setCycles(1);
+            setWaveform.setIsTransient(false);
+            setWaveform.setPeriod(Config.DURATION_OF_COLOR_CHANGE);
+            setWaveform.setWaveform(Waveforms.HALF_SINE);
+            Command changeColor = new Command(setWaveform);
+            try {
+                ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
             mPreviousColor = color;
         }
     }
@@ -46,64 +61,65 @@ public class LightsController {
     public void init() {
         mWorkingFine = false;
         mDisconnected = false;
-        mNetworkContext = LFXClient.getSharedInstance(App.get()).getLocalNetworkContext();
-        mNetworkContext.addNetworkContextListener(new LFXNetworkContext.LFXNetworkContextListener() {
-            @Override
-            public void networkContextDidConnect(LFXNetworkContext networkContext) {
-                mDisconnected = false;
-            }
-
-            @Override
-            public void networkContextDidDisconnect(LFXNetworkContext networkContext) {
-                if (!mDisconnected && mWorkingFine) {
-                    mWorkingFine = false;
-                    Toas.t(R.string.lifx_disconnected);
-                    App.bus().post(new ErrorEvent(R.string.lifx_disconnected));
-                }
-            }
-
-            @Override
-            public void networkContextDidAddTaggedLightCollection(LFXNetworkContext networkContext, LFXTaggedLightCollection collection) {
-                startRocking();
-            }
-
-            @Override
-            public void networkContextDidRemoveTaggedLightCollection(LFXNetworkContext networkContext, LFXTaggedLightCollection collection) {
-            }
-        });
     }
 
     private void startRocking() {
         App.bus().post(new SuccessEvent());
         mWorkingFine = true;
-        mNetworkContext.getAllLightsCollection().setPowerState(LFXTypes.LFXPowerState.ON);
+        SetPower_Light setPower = new SetPower_Light(Power.ON);
+        Command powerOn = new Command(setPower);
+        try {
+            ControlMethods.sendBroadcastMessage(powerOn.getByteArray(), port);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void start() {
-        mNetworkContext.connect();
-        if (!mWorkingFine) {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        ReceiveMessages receiveMessages = new ReceiveMessages(port);
+        receiveMessages.start();
+        /*if (!mWorkingFine) {
             new TimeoutTask().start();
-        } else {
+        } else {*/
             startRocking();
-        }
+//        }
     }
 
     public void stop() {
         mDisconnected = true;
-        if (mNetworkContext != null && mWorkingFine) {
+        //TODO disconnect properly
+        /*if (mNetworkContext != null && mWorkingFine) {
             mNetworkContext.disconnect();
-        }
+        }*/
     }
 
-    private LFXHSBKColor convertColor(int color) {
+    private HSBK convertColor(int color) {
         float[] hsv = new float[3];
         Color.colorToHSV(color, hsv);
-        return LFXHSBKColor.getColor(hsv[0], hsv[1], Config.LIFX_BRIGHTNESS, 3500);
+        HSBK hsbk2 = new HSBK();
+        hsbk2.setHue(Math.round(hsv[0] * 182));
+        hsbk2.setSaturation(Math.round(hsv[1] * 65535));
+        hsbk2.setBrightness(Config.LIFX_BRIGHTNESS);
+        hsbk2.setKelvin(3500);
+        return hsbk2;
     }
 
     public void signalStop() {
         int color = App.get().getResources().getColor(android.R.color.white);
-        mNetworkContext.getAllLightsCollection().setColorOverDuration(convertColor(color), 100);
+        SetWaveform setWaveform = new SetWaveform();
+        setWaveform.setColor(convertColor(color));
+        setWaveform.setCycles(1);
+        setWaveform.setIsTransient(false);
+        setWaveform.setPeriod(100);
+        setWaveform.setWaveform(Waveforms.HALF_SINE);
+        Command changeColor = new Command(setWaveform);
+        try {
+            ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
     }
 
     class TimeoutTask extends BaseAsyncTask {
@@ -118,12 +134,21 @@ public class LightsController {
 
         @Override
         public void postExecute() {
-            int numLights = mNetworkContext.getAllLightsCollection().getLights().size();
+            //TODO handle response from light bulbs to know how many are they
+            GetService getService = new GetService();
+            Command serviceCommand = new Command(getService);
+            serviceCommand.getFrame().setTagged(true);
+            try {
+                ControlMethods.sendBroadcastMessage(serviceCommand.getByteArray(), port);
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+            /*int numLights = mNetworkContext.getAllLightsCollection().getLights().size();
             if (numLights == 0 || mDisconnected) {
                 App.bus().post(new ErrorEvent(R.string.no_lights_found));
             } else {
                 startRocking();
-            }
+            }*/
         }
     }
 }
