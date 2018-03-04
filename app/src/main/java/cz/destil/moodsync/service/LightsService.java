@@ -75,7 +75,7 @@ public class LightsService extends Service {
         startForeground(42, notification);
 
         WifiManager wifi;
-        wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         mMulticastLock = wifi.createMulticastLock("lifx");
         mMulticastLock.acquire();
 
