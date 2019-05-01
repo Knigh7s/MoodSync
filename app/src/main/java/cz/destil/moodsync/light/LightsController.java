@@ -50,7 +50,14 @@ public class LightsController {
             setWaveform.setWaveform(Waveforms.HALF_SINE);
             Command changeColor = new Command(setWaveform);
             try {
+                switch(Config.UNICAST_IP){
+                    case "":
                 ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
+                        break;
+                    default:
+                        ControlMethods.sendUdpMessage(changeColor.getByteArray(),Config.UNICAST_IP,port);
+                        break;
+                }
             } catch(IOException e) {
                 e.printStackTrace();
             }
@@ -69,7 +76,14 @@ public class LightsController {
         SetPower_Light setPower = new SetPower_Light(Power.ON);
         Command powerOn = new Command(setPower);
         try {
+            switch(Config.UNICAST_IP){
+                case "":
             ControlMethods.sendBroadcastMessage(powerOn.getByteArray(), port);
+                    break;
+                default:
+                    ControlMethods.sendUdpMessage(powerOn.getByteArray(),ip,port);
+                    break;
+            }
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -98,10 +112,19 @@ public class LightsController {
     private HSBK convertColor(int color) {
         float[] hsv = new float[3];
         Color.colorToHSV(color, hsv);
+        if(Config.REDUCE_DIM_LIGHT_CHANGES) {
+            if (hsv[2]  < 0.04) { //prevent light flickering at low brightness
+                hsv[0] = 0.14f;
+                hsv[1] = 0.0f;
+                hsv[2] = 0.02f;
+            } else {
+                hsv[1] = Math.min(2 * hsv[2] * hsv[1], 1); //desaturate dimmer lights
+            }
+        }
         HSBK hsbk2 = new HSBK();
         hsbk2.setHue(Math.round(hsv[0] * 182));
         hsbk2.setSaturation(Math.round(hsv[1] * 65535));
-        hsbk2.setBrightness(Config.LIFX_BRIGHTNESS);
+        hsbk2.setBrightness(Math.round(hsv[2]*Config.LIFX_BRIGHTNESS));
         hsbk2.setKelvin(3500);
         return hsbk2;
     }
@@ -116,7 +139,14 @@ public class LightsController {
         setWaveform.setWaveform(Waveforms.HALF_SINE);
         Command changeColor = new Command(setWaveform);
         try {
+            switch(Config.UNICAST_IP){
+                case "":
             ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
+                    break;
+                default:
+                    ControlMethods.sendUdpMessage(changeColor.getByteArray(),ip,port);
+                    break;
+            }
         } catch(IOException e) {
             e.printStackTrace();
         }
@@ -139,7 +169,15 @@ public class LightsController {
             Command serviceCommand = new Command(getService);
             serviceCommand.getFrame().setTagged(true);
             try {
+                switch(Config.UNICAST_IP){
+                    case "":
                 ControlMethods.sendBroadcastMessage(serviceCommand.getByteArray(), port);
+                        break;
+                    default:
+                        ControlMethods.sendUdpMessage(serviceCommand.getByteArray(),ip,port);
+                        break;
+                }
+
             } catch(IOException e) {
                 e.printStackTrace();
             }
