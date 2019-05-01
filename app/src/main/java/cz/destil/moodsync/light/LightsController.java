@@ -81,7 +81,7 @@ public class LightsController {
             ControlMethods.sendBroadcastMessage(powerOn.getByteArray(), port);
                     break;
                 default:
-                    ControlMethods.sendUdpMessage(powerOn.getByteArray(),ip,port);
+                    ControlMethods.sendUdpMessage(powerOn.getByteArray(),Config.UNICAST_IP,port);
                     break;
             }
         } catch(Exception e) {
@@ -144,7 +144,7 @@ public class LightsController {
             ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
                     break;
                 default:
-                    ControlMethods.sendUdpMessage(changeColor.getByteArray(),ip,port);
+                    ControlMethods.sendUdpMessage(changeColor.getByteArray(),Config.UNICAST_IP,port);
                     break;
             }
         } catch(IOException e) {
@@ -174,7 +174,7 @@ public class LightsController {
                 ControlMethods.sendBroadcastMessage(serviceCommand.getByteArray(), port);
                         break;
                     default:
-                        ControlMethods.sendUdpMessage(serviceCommand.getByteArray(),ip,port);
+                        ControlMethods.sendUdpMessage(serviceCommand.getByteArray(),Config.UNICAST_IP,port);
                         break;
                 }
 
