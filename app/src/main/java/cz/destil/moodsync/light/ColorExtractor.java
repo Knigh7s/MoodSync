@@ -2,6 +2,7 @@ package cz.destil.moodsync.light;
 
 import android.graphics.Bitmap;
 import android.support.v7.graphics.Palette;
+import android.support.v7.graphics.Target;
 
 import cz.destil.moodsync.R;
 import cz.destil.moodsync.core.App;
@@ -18,6 +19,21 @@ public class ColorExtractor {
 
     private static ColorExtractor sInstance;
     private boolean mRunning = true;
+    private static Target DOMINANT;
+
+    static {
+        DOMINANT = new Target.Builder().setPopulationWeight(1f)
+                .setMinimumLightness(0f)
+                .setTargetLightness(0.5f)
+                .setMaximumLightness(1f)
+                .setMinimumSaturation(0f)
+                .setTargetSaturation(0.6f)
+                .setMaximumSaturation(1f)
+                .setSaturationWeight(0f)
+                .setLightnessWeight(0f)
+                .setExclusive(false)
+                .build();
+    }
 
     public static ColorExtractor get() {
         if (sInstance == null) {
@@ -41,12 +57,20 @@ public class ColorExtractor {
             mirroring.getLatestBitmap(new MirroringHelper.Listener() {
                 @Override
                 public void onBitmapAvailable(final Bitmap bitmap) {
-                    Palette.generateAsync(bitmap, 25, new Palette.PaletteAsyncListener() {
+
+                Palette.
+                    from(bitmap)
+                    .maximumColorCount(25)
+                    //.setRegion(0,0,Config.VIRTUAL_DISPLAY_WIDTH,Config.VIRTUAL_DISPLAY_HEIGHT)
+                    .clearFilters()
+                    .clearTargets()
+                    .addTarget(DOMINANT)
+                    .generate(new Palette.PaletteAsyncListener(){
                         @Override
                         public void onGenerated(Palette palette) {
                             bitmap.recycle();
                             int defaultColor = App.get().getResources().getColor(R.color.not_recognized);
-                            final int color = palette.getVibrantColor(defaultColor);
+                            final int color = palette.getColorForTarget(DOMINANT,defaultColor);//.getDominantColor(defaultColor);
                             listener.onColorExtracted(color);
                             new SleepTask(Config.FREQUENCE_OF_SCREENSHOTS, new SleepTask.Listener() {
                                 @Override
