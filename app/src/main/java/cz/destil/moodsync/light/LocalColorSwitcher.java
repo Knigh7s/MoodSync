@@ -36,7 +36,7 @@ public class LocalColorSwitcher {
 
     private void changeColor() {
         if (mRunning) {
-            mSleepTask = new SleepTask(Config.DURATION_OF_COLOR_CHANGE, new SleepTask.Listener() {
+            mSleepTask = new SleepTask(2000, new SleepTask.Listener() {
                 @Override
                 public void awoken() {
                     if (mRunning) {

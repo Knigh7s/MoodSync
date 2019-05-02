@@ -45,20 +45,30 @@ public class ColorThiefAsync {
         @NonNull
         public Integer getDominantColor() {
             if (mBitmap != null) {
-                Bitmap bitmap;
-                bitmap = mBitmap;
+                Bitmap bitmap = mBitmap;
                 Rect region = mRegion;
 
-                int[] rgb = ColorThief.getColor(bitmap,region,1,false);
+                int[][] palette = ColorThief.getPalette(bitmap,region,5,1,false);
 
-                // If created a new bitmap, recycle it
-                if (bitmap != mBitmap) {
-                    bitmap.recycle();
+                int[] dominantColor = {0, 0, 0, 0}; //last item is for average brightness of all palette colors
+                if (palette == null) {
+                    return 0;
                 }
-                int value = ((255 & 0xFF) << 24) | //alpha
-                        (((int) rgb[0] & 0xFF) << 16) | //red
-                        (((int) rgb[1] & 0xFF) << 8) | //green
-                        (((int) rgb[2] & 0xFF) << 0); //blue
+                dominantColor[0] = palette[0][0];
+                dominantColor[1] = palette[0][1];
+                dominantColor[2] = palette[0][2];
+                //calculate average brightness
+                for(int i = 0; i<palette.length; i++){
+                    for (int j =0; j<3;j++){
+                        dominantColor[3]+= palette[i][j];
+                    }
+                }
+                dominantColor[3] = dominantColor[3]/(palette.length*3);
+
+                int value = ((dominantColor[3] & 0xFF) << 24) | //alpha being repurposed to store average brightness of pixel palette
+                        (((int) dominantColor[0] & 0xFF) << 16) | //red
+                        (((int) dominantColor[1] & 0xFF) << 8) | //green
+                        (((int) dominantColor[2] & 0xFF) << 0); //blue
 
                 return value;
             } else {

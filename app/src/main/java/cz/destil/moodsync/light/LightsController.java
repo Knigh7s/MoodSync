@@ -12,6 +12,7 @@ import com.lifx.Messages.Light.SetWaveform;
 import com.lifx.Values.Power;
 import com.lifx.Values.Waveforms;
 
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.StrictMode;
 import cz.destil.moodsync.core.App;
@@ -111,20 +112,37 @@ public class LightsController {
 
     private HSBK convertColor(int color) {
         float[] hsv = new float[3];
-        Color.colorToHSV(color, hsv);
+
+        Color.RGBToHSV(Color.red(color),Color.green(color),Color.blue(color), hsv);
+        float brightness;
+        switch (Config.BRIGHTNESS_MODE) {
+            case Config.BRIGHTNESS_STATIC:
+                brightness = Config.LIFX_BRIGHTNESS;
+                break;
+            case Config.BRIGHTNESS_COLOR:
+                brightness = hsv[2]*Config.LIFX_BRIGHTNESS;
+                break;
+            case Config.BRIGHTNESS_AVERAGE:
+                brightness = (Color.alpha(color) / 255f) * Config.LIFX_BRIGHTNESS; //unpack stored average brightness of palette from color alpha channel
+                break;
+            default:
+                brightness = Config.LIFX_BRIGHTNESS;
+                break;
+        }
+
         if(Config.REDUCE_DIM_LIGHT_CHANGES) {
-            if (hsv[2]  < 0.04) { //prevent light flickering at low brightness
+            if (brightness  < 0.03) { //prevent light flickering at low brightness
                 hsv[0] = 0.14f;
                 hsv[1] = 0.0f;
-                hsv[2] = 0.02f;
+                brightness = 0.02f;
             } else {
-                hsv[1] = Math.min(2 * hsv[2] * hsv[1], 1); //desaturate dimmer lights
+                hsv[1] = Math.min(2 * brightness * hsv[1], 1); //desaturate dimmer lights
             }
         }
         HSBK hsbk2 = new HSBK();
         hsbk2.setHue(Math.round(hsv[0] * 182));
         hsbk2.setSaturation(Math.round(hsv[1] * 65535));
-        hsbk2.setBrightness(Math.round(hsv[2]*Config.LIFX_BRIGHTNESS));
+        hsbk2.setBrightness(Math.round(brightness));
         hsbk2.setKelvin(3500);
         return hsbk2;
     }

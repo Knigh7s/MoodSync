@@ -93,20 +93,15 @@ public class MirroringHelper {
 
                     @Override
                     public void inBackground() {
-                        try {
-                            Image img = mImageReader.acquireLatestImage();
-                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                            final Image.Plane[] planes = img.getPlanes();
-                            final ByteBuffer buffer = (ByteBuffer) planes[0].getBuffer().rewind();
-                            bitmap = Bitmap.createBitmap(img.getWidth(), img.getHeight(), Bitmap.Config.ARGB_8888);
-                            bitmap.copyPixelsFromBuffer(buffer);
-                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, bos);
-                            bos.close();
-                            img.close();
-                            mImageReader.close();
-                            mVirtualDisplay.release();
-                        } catch (IOException ignored) {
-                        }
+                        Image img = mImageReader.acquireLatestImage();
+                        final Image.Plane[] planes = img.getPlanes();
+                        final ByteBuffer buffer = (ByteBuffer) planes[0].getBuffer().rewind();
+                        bitmap = Bitmap.createBitmap(img.getWidth(), img.getHeight(), Bitmap.Config.ARGB_8888);
+                        bitmap.copyPixelsFromBuffer(buffer);
+
+                        img.close();
+                        mImageReader.close();
+                        mVirtualDisplay.release();
                     }
 
                     @Override

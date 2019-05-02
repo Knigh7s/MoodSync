@@ -74,11 +74,12 @@ public class LightsService extends Service {
                 .setContentIntent(pi).build();
         startForeground(42, notification);
 
-        WifiManager wifi;
-        wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        mMulticastLock = wifi.createMulticastLock("lifx");
-        mMulticastLock.acquire();
-
+        if(Config.UNICAST_IP != "") {
+            WifiManager wifi;
+            wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            mMulticastLock = wifi.createMulticastLock("lifx");
+            mMulticastLock.acquire();
+        }
         mLights.start();
         mColorExtractor.start(mMirroring, new ColorExtractor.Listener() {
             @Override

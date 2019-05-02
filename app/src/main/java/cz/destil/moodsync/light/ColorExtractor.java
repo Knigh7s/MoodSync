@@ -47,7 +47,6 @@ public class ColorExtractor {
                                 @Override
                                 public void onColorExtracted(Integer color) {
                                     bitmap.recycle();
-                                    int defaultColor = App.get().getResources().getColor(R.color.not_recognized);
                                     listener.onColorExtracted(color);
                                     new SleepTask(Config.FREQUENCE_OF_SCREENSHOTS, new SleepTask.Listener() {
                                         @Override
