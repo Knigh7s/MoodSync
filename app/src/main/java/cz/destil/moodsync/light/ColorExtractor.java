@@ -40,13 +40,14 @@ public class ColorExtractor {
             mirroring.getLatestBitmap(new MirroringHelper.Listener() {
                 @Override
                 public void onBitmapAvailable(final Bitmap bitmap) {
+                    final Bitmap bitmapCopy = bitmap.copy(bitmap.getConfig(),true);
                     ColorThiefAsync
-                            .from(bitmap)
+                            .from(bitmapCopy)
                             .setRegion(Config.COLOR_REGION_LEFT,Config.COLOR_REGION_TOP,Config.COLOR_REGION_RIGHT,Config.COLOR_REGION_BOTTOM)
                             .getDominantColor(new ColorThiefAsync.ColorThiefAsyncListener(){
                                 @Override
                                 public void onColorExtracted(Integer color) {
-                                    bitmap.recycle();
+                                    bitmapCopy.recycle();
                                     listener.onColorExtracted(color);
                                     new SleepTask(Config.FREQUENCE_OF_SCREENSHOTS, new SleepTask.Listener() {
                                         @Override

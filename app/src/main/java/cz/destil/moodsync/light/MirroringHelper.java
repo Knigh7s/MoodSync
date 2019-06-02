@@ -36,6 +36,7 @@ public class MirroringHelper {
     private DisplayMetrics mMetrics;
     private MediaProjection mMediaProjection;
     private VirtualDisplay mVirtualDisplay;
+    private Bitmap mLatestBitmap;
 
     public static MirroringHelper get() {
         if (sInstance == null) {
@@ -47,12 +48,14 @@ public class MirroringHelper {
     public void init() {
         mProjectionManager = (MediaProjectionManager) App.get().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         mMetrics = App.get().getResources().getDisplayMetrics();
+
     }
 
     public void askForPermission(Activity activity) {
         mMirroring = true;
         activity.startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
     }
+
 
     public void stop() {
         mMirroring = false;
@@ -61,6 +64,9 @@ public class MirroringHelper {
         }
         if (mVirtualDisplay != null) {
             mVirtualDisplay.release();
+        }
+        if (mImageReader != null){
+            mImageReader.close();
         }
     }
 
@@ -77,40 +83,38 @@ public class MirroringHelper {
 
     public void permissionGranted(int resultCode, Intent data) {
         mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
-    }
-
-    public void getLatestBitmap(final Listener listener) {
         mImageReader = ImageReader.newInstance(Config.VIRTUAL_DISPLAY_WIDTH, Config.VIRTUAL_DISPLAY_HEIGHT, PixelFormat.RGBA_8888, 5);
         mVirtualDisplay = createVirtualDisplay();
         mVirtualDisplay.setSurface(mImageReader.getSurface());
         mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                mImageReader.setOnImageAvailableListener(null, null);
-                new BaseAsyncTask() {
+                try {
+
+                    Image img = mImageReader.acquireLatestImage();
 
                     Bitmap bitmap;
 
-                    @Override
-                    public void inBackground() {
-                        Image img = mImageReader.acquireLatestImage();
-                        final Image.Plane[] planes = img.getPlanes();
-                        final ByteBuffer buffer = (ByteBuffer) planes[0].getBuffer().rewind();
-                        bitmap = Bitmap.createBitmap(img.getWidth(), img.getHeight(), Bitmap.Config.ARGB_8888);
-                        bitmap.copyPixelsFromBuffer(buffer);
-
-                        img.close();
-                        mImageReader.close();
-                        mVirtualDisplay.release();
+                    final Image.Plane[] planes = img.getPlanes();
+                    final ByteBuffer buffer = (ByteBuffer) planes[0].getBuffer().rewind();
+                    bitmap = Bitmap.createBitmap(img.getWidth(), img.getHeight(), Bitmap.Config.ARGB_8888);
+                    bitmap.copyPixelsFromBuffer(buffer);
+                    img.close();
+                    if (mLatestBitmap != null){
+                        mLatestBitmap.recycle();
                     }
-
-                    @Override
-                    public void postExecute() {
-                        listener.onBitmapAvailable(bitmap);
-                    }
-                }.start();
+                    mLatestBitmap = bitmap;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }, null);
+    }
+
+
+    public void getLatestBitmap(final Listener listener) {
+        Bitmap bitmap = mLatestBitmap;
+        listener.onBitmapAvailable(bitmap);
     }
 
     public interface Listener {
