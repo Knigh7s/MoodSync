@@ -79,7 +79,7 @@ public class LightsController {
         try {
             switch(Config.UNICAST_IP){
                 case "":
-            ControlMethods.sendBroadcastMessage(powerOn.getByteArray(), port);
+                    ControlMethods.sendBroadcastMessage(powerOn.getByteArray(), port);
                     break;
                 default:
                     ControlMethods.sendUdpMessage(powerOn.getByteArray(),Config.UNICAST_IP,port);
@@ -156,13 +156,18 @@ public class LightsController {
         setWaveform.setPeriod(100);
         setWaveform.setWaveform(Waveforms.HALF_SINE);
         Command changeColor = new Command(setWaveform);
+
+        SetPower_Light setPower = new SetPower_Light(Power.OFF);
+        Command powerOff = new Command(setPower);
         try {
             switch(Config.UNICAST_IP){
                 case "":
-            ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
+                    ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
+                    ControlMethods.sendBroadcastMessage(powerOff.getByteArray(), port);
                     break;
                 default:
                     ControlMethods.sendUdpMessage(changeColor.getByteArray(),Config.UNICAST_IP,port);
+                    ControlMethods.sendUdpMessage(powerOff.getByteArray(),Config.UNICAST_IP,port);
                     break;
             }
         } catch(IOException e) {
