@@ -46,9 +46,9 @@ public class ColorExtractor {
                             .setRegion(Config.COLOR_REGION_LEFT,Config.COLOR_REGION_TOP,Config.COLOR_REGION_RIGHT,Config.COLOR_REGION_BOTTOM)
                             .getDominantColor(new ColorThiefAsync.ColorThiefAsyncListener(){
                                 @Override
-                                public void onColorExtracted(Integer color) {
+                                public void onColorExtracted(Integer color, Integer overallBrightness) {
                                     bitmapCopy.recycle();
-                                    listener.onColorExtracted(color);
+                                    listener.onColorExtracted(color, overallBrightness);
                                     new SleepTask(Config.FREQUENCE_OF_SCREENSHOTS, new SleepTask.Listener() {
                                         @Override
                                         public void awoken() {
@@ -67,6 +67,6 @@ public class ColorExtractor {
     }
 
     public interface Listener {
-        public void onColorExtracted(int color);
+        public void onColorExtracted(int color, int overallBrightness);
     }
 }

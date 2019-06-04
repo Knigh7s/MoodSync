@@ -151,6 +151,40 @@ public class MMCQ {
             return _avg;
         }
 
+        public int[] wavg(boolean force) { //weighted average
+            if (_avg == null || force) {
+                int ntot = 0;
+
+                int rsum = 0;
+                int gsum = 0;
+                int bsum = 0;
+
+                int hval, i, j, k, histoindex;
+
+                for (i = r1; i <= r2; i++) {
+                    for (j = g1; j <= g2; j++) {
+                        for (k = b1; k <= b2; k++) {
+                            histoindex = getColorIndex(i, j, k);
+                            hval = histo[histoindex];
+                            ntot += hval;
+                            rsum += (hval * (i + 0.5) * MULT);
+                            gsum += (hval * (j + 0.5) * MULT);
+                            bsum += (hval * (k + 0.5) * MULT);
+                        }
+                    }
+                }
+
+                if (ntot > 0) {
+                    _avg = new int[] {~~ntot, ~~(rsum / ntot), ~~(gsum / ntot), ~~(bsum / ntot)};
+                } else {
+                    _avg = new int[] {~~ntot ,~~(MULT * (r1 + r2 + 1) / 2), ~~(MULT * (g1 + g2 + 1) / 2),
+                            ~~(MULT * (b1 + b2 + 1) / 2)};
+                }
+            }
+
+            return _avg;
+        }
+
         public boolean contains(int[] pixel) {
             int rval = pixel[0] >> RSHIFT;
             int gval = pixel[1] >> RSHIFT;
@@ -180,6 +214,15 @@ public class MMCQ {
                 palette[i] = vboxes.get(i).avg(false);
             }
             return palette;
+        }
+
+        public int[][] wpalette() { //weighted palette
+            int numVBoxes = vboxes.size();
+            int[][] wpalette = new int[numVBoxes][];
+            for (int i = 0; i < numVBoxes; i++) {
+                wpalette[i] = vboxes.get(i).wavg(false);
+            }
+            return wpalette;
         }
 
         public int size() {

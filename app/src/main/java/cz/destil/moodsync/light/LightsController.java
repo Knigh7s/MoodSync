@@ -41,10 +41,10 @@ public class LightsController {
         return sInstance;
     }
 
-    public void changeColor(int color) {
+    public void changeColor(int color, int overallBrightness) {
         if (mWorkingFine && color != mPreviousColor) {
             SetWaveform setWaveform = new SetWaveform();
-            setWaveform.setColor(convertColor(color));
+            setWaveform.setColor(convertColor(color,overallBrightness));
             setWaveform.setCycles(1);
             setWaveform.setIsTransient(false);
             setWaveform.setPeriod(Config.DURATION_OF_COLOR_CHANGE);
@@ -110,8 +110,13 @@ public class LightsController {
         }*/
     }
 
-    private HSBK convertColor(int color) {
+    private HSBK convertColor(int color, int overallBrightness) {
         float[] hsv = new float[3];
+
+        int colorDominance = Color.alpha(color); //unpack stored color dominance from color alpha channel
+        if (colorDominance < Config.MINIMUM_COLOR_DOMINANCE){
+            color = mPreviousColor;
+        }
 
         Color.RGBToHSV(Color.red(color),Color.green(color),Color.blue(color), hsv);
         float brightness;
@@ -123,7 +128,7 @@ public class LightsController {
                 brightness = hsv[2]*Config.LIFX_BRIGHTNESS;
                 break;
             case Config.BRIGHTNESS_AVERAGE:
-                brightness = (Color.alpha(color) / 255f) * Config.LIFX_BRIGHTNESS; //unpack stored average brightness of palette from color alpha channel
+                brightness = (overallBrightness/255f) * Config.LIFX_BRIGHTNESS;
                 break;
             default:
                 brightness = Config.LIFX_BRIGHTNESS;
@@ -131,26 +136,27 @@ public class LightsController {
         }
 
         if(Config.REDUCE_DIM_LIGHT_CHANGES) {
-            if (brightness  < 0.03) { //prevent light flickering at low brightness
+            if (brightness  < Config.MINIMUM_BRIGHTNESS) { //prevent light flickering at low brightness
                 hsv[0] = 0.14f;
                 hsv[1] = 0.0f;
-                brightness = 0.02f;
+                brightness = Config.MINIMUM_BRIGHTNESS;
             } else {
-                hsv[1] = Math.min(2 * brightness * hsv[1], 1); //desaturate dimmer lights
+                float saturationModifier = Math.min(5*(brightness/65535f),1);
+                hsv[1] = hsv[1]*saturationModifier; //desaturate dimmer lights
             }
         }
         HSBK hsbk2 = new HSBK();
         hsbk2.setHue(Math.round(hsv[0] * 182));
         hsbk2.setSaturation(Math.round(hsv[1] * 65535));
         hsbk2.setBrightness(Math.round(brightness));
-        hsbk2.setKelvin(3500);
+        hsbk2.setKelvin(Config.WHITE_TEMPERATURE);
         return hsbk2;
     }
 
     public void signalStop() {
         int color = App.get().getResources().getColor(android.R.color.white);
         SetWaveform setWaveform = new SetWaveform();
-        setWaveform.setColor(convertColor(color));
+        setWaveform.setColor(convertColor(color,1));
         setWaveform.setCycles(1);
         setWaveform.setIsTransient(false);
         setWaveform.setPeriod(100);
