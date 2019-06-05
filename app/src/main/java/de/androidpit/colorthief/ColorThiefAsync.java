@@ -19,6 +19,7 @@ public class ColorThiefAsync {
         private final Bitmap mBitmap;
         private Rect mRegion;
         private Integer mOverallBrightness = 0;
+        private boolean mIgnoreBlackLines = false;
 
         public Builder(Bitmap bitmap) {
             if (bitmap == null || bitmap.isRecycled()) {
@@ -44,6 +45,12 @@ public class ColorThiefAsync {
             return this;
         }
 
+        @NonNull
+        public Builder ignoreBlackLines(boolean ignoreBlackLines){
+            mIgnoreBlackLines = ignoreBlackLines;
+            return this;
+        }
+
         public Integer getOverallBrightness(){
             return mOverallBrightness;
         }
@@ -54,7 +61,7 @@ public class ColorThiefAsync {
                 Bitmap bitmap = mBitmap;
                 Rect region = mRegion;
 
-                int[][] palette = ColorThief.getWPalette(bitmap,region,5,1,false);
+                int[][] palette = ColorThief.getWPalette(bitmap,region,5,1,false,mIgnoreBlackLines);
 
                 int overallBrightness = 0;
 
@@ -89,9 +96,9 @@ public class ColorThiefAsync {
                     palette[i][0] = (int)(((float)palette[i][0]/pixelCount) * 255);
                 }
 
-                if(palette[0][0] < Config.MINIMUM_COLOR_DOMINANCE){
+                /*if(palette[0][0] < mMinimumColorDominance){
                     return 0;
-                }
+                }*/
 
                 int value = ((dominantColor[0] & 0xFF) << 24) | //alpha being repurposed to store color dominance
                         (((int) dominantColor[1] & 0xFF) << 16) | //red

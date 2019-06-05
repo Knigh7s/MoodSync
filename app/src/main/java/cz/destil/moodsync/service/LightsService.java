@@ -5,8 +5,10 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 
 import com.squareup.otto.Subscribe;
 
@@ -73,6 +75,9 @@ public class LightsService extends Service {
                 .mirroring)).setContentText(getString(R.string.tap_to_change))
                 .setContentIntent(pi).build();
         startForeground(42, notification);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        mLights.reduceDimLightChanges( sharedPreferences.getBoolean("reduce_dim_light_changes",false));
+        mColorExtractor.ignoreBlackLines( sharedPreferences.getBoolean("ignore_black_lines",false));
 
         if(Config.UNICAST_IP != "") {
             WifiManager wifi;
@@ -80,7 +85,10 @@ public class LightsService extends Service {
             mMulticastLock = wifi.createMulticastLock("lifx");
             mMulticastLock.acquire();
         }
+        mLights.minimumColorDominance( Integer.valueOf(sharedPreferences.getString("minimum_color_dominance",getString(R.string.default_minimum_color_dominance))));
+        mLights.whiteTemperature( Integer.valueOf(sharedPreferences.getString("white_temperature",getString(R.string.default_white_temperature))));
         mLights.start();
+
         mColorExtractor.start(mMirroring, new ColorExtractor.Listener() {
             @Override
             public void onColorExtracted(int color, int overallBrightness) {

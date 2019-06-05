@@ -2,8 +2,6 @@ package cz.destil.moodsync.light;
 
 import android.graphics.Bitmap;
 
-import cz.destil.moodsync.R;
-import cz.destil.moodsync.core.App;
 import cz.destil.moodsync.core.Config;
 import cz.destil.moodsync.util.SleepTask;
 import de.androidpit.colorthief.ColorThiefAsync;
@@ -17,6 +15,7 @@ public class ColorExtractor {
 
     private static ColorExtractor sInstance;
     private boolean mRunning = true;
+    private boolean mIgnoreBlackLines = false;
 
     public static ColorExtractor get() {
         if (sInstance == null) {
@@ -35,6 +34,10 @@ public class ColorExtractor {
         }).start();
     }
 
+    public void ignoreBlackLines(boolean ignoreBlackLines){
+        mIgnoreBlackLines = ignoreBlackLines;
+    }
+
     private void extractBitmap(final MirroringHelper mirroring, final Listener listener) {
         if (mRunning) {
             mirroring.getLatestBitmap(new MirroringHelper.Listener() {
@@ -44,6 +47,7 @@ public class ColorExtractor {
                     ColorThiefAsync
                             .from(bitmapCopy)
                             .setRegion(Config.COLOR_REGION_LEFT,Config.COLOR_REGION_TOP,Config.COLOR_REGION_RIGHT,Config.COLOR_REGION_BOTTOM)
+                            .ignoreBlackLines(mIgnoreBlackLines)
                             .getDominantColor(new ColorThiefAsync.ColorThiefAsyncListener(){
                                 @Override
                                 public void onColorExtracted(Integer color, Integer overallBrightness) {

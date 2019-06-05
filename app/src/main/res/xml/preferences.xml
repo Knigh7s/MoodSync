@@ -1,0 +1,28 @@
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:key="ignore_black_lines"
+        android:title="Ignore letterboxed lines"/>
+
+    <SwitchPreference
+        android:key="reduce_dim_light_changes"
+        android:title="Reduce dim light changes"
+        android:summary="Desaturate colors as brightness decreases and maintain minimum light level"/>
+
+    <EditTextPreference
+        android:key="white_temperature"
+        android:title="White Temperature"
+        android:summary="Temperature in Kelvin"
+        android:numeric="integer"
+        android:maxLength="4"
+        android:defaultValue="@string/default_white_temperature"/>
+
+    <EditTextPreference
+        android:key="minimum_color_dominance"
+        android:title="Minimum Color Dominance"
+        android:summary="0-255, minimum area that a color should cover before changing lights"
+        android:numeric="integer"
+        android:maxLength="3"
+        android:defaultValue="@string/default_minimum_color_dominance"/>
+</PreferenceScreen>

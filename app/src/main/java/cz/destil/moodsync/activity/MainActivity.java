@@ -7,6 +7,7 @@ import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -41,6 +42,9 @@ public class MainActivity extends Activity {
     TextView vProgressText;
     @Bind(R.id.control)
     ToggleButton vButton;
+    @Bind(R.id.settings)
+    ImageButton vSettings;
+
 
     MirroringHelper mMirroring;
     private LocalColorSwitcher mColorSwitcher;
@@ -85,6 +89,11 @@ public class MainActivity extends Activity {
             showProgress(R.string.connecting);
             mMirroring.askForPermission(this);
         }
+    }
+
+    @OnClick(R.id.settings)
+    public void openSettings(){
+        startActivity(new Intent(MainActivity.this, SettingsActivity.class));
     }
 
     @Override

@@ -12,5 +12,6 @@
     <string name="connecting">Connecting to LIFX lights …</string>
     <string name="lifx_disconnected">LIFX lights disconnected</string>
     <string name="no_lights_found">No lights found on this network</string>
-
+    <string name="default_white_temperature">5500</string>
+    <string name="default_minimum_color_dominance">99</string>
 </resources>

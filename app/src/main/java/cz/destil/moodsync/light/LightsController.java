@@ -12,7 +12,6 @@ import com.lifx.Messages.Light.SetWaveform;
 import com.lifx.Values.Power;
 import com.lifx.Values.Waveforms;
 
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.StrictMode;
 import cz.destil.moodsync.core.App;
@@ -33,12 +32,27 @@ public class LightsController {
     private boolean mDisconnected;
     private int mPreviousColor = -1;
     private int port = 56700;
+    private boolean mReduceDimLightChanges = false;
+    private int mWhiteTemperature = 5500;
+    private int mMinimumColorDominance = 0;
 
     public static LightsController get() {
         if (sInstance == null) {
             sInstance = new LightsController();
         }
         return sInstance;
+    }
+
+    public void reduceDimLightChanges(boolean reduceDimLightChanges){
+        mReduceDimLightChanges = reduceDimLightChanges;
+    }
+
+    public void whiteTemperature(int whiteTemperature){
+        mWhiteTemperature = whiteTemperature;
+    }
+
+    public void minimumColorDominance(int minimumColorDominance){
+        mMinimumColorDominance = minimumColorDominance;
     }
 
     public void changeColor(int color, int overallBrightness) {
@@ -114,7 +128,7 @@ public class LightsController {
         float[] hsv = new float[3];
 
         int colorDominance = Color.alpha(color); //unpack stored color dominance from color alpha channel
-        if (colorDominance < Config.MINIMUM_COLOR_DOMINANCE){
+        if (colorDominance < mMinimumColorDominance){
             color = mPreviousColor;
         }
 
@@ -135,7 +149,7 @@ public class LightsController {
                 break;
         }
 
-        if(Config.REDUCE_DIM_LIGHT_CHANGES) {
+        if(mReduceDimLightChanges) {
             if (brightness  < Config.MINIMUM_BRIGHTNESS) { //prevent light flickering at low brightness
                 hsv[0] = 0.14f;
                 hsv[1] = 0.0f;
@@ -149,7 +163,7 @@ public class LightsController {
         hsbk2.setHue(Math.round(hsv[0] * 182));
         hsbk2.setSaturation(Math.round(hsv[1] * 65535));
         hsbk2.setBrightness(Math.round(brightness));
-        hsbk2.setKelvin(Config.WHITE_TEMPERATURE);
+        hsbk2.setKelvin(mWhiteTemperature);
         return hsbk2;
     }
 

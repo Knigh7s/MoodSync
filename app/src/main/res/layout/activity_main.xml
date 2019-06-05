@@ -27,7 +27,7 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_weight="3">
 
             <ToggleButton
                 android:layout_width="wrap_content"
@@ -39,6 +39,22 @@
                 android:textOff="@string/turned_off"
                 android:checked="false"
                 android:id="@+id/control"/>
+        </FrameLayout>
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <ImageButton
+                android:src="@drawable/settings_white"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="settings"
+                android:textSize="18sp"
+                android:padding="6dp"
+                android:layout_gravity="center"
+                android:id="@+id/settings"/>
+                />
         </FrameLayout>
 
         <TextView
