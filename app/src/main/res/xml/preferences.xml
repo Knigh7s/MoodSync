@@ -1,5 +1,6 @@
 <PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:robobunny="http://robobunny.com">
 
     <SwitchPreference
         android:key="ignore_black_lines"
@@ -11,6 +12,15 @@
         android:summary="Desaturate colors as brightness decreases and maintain minimum light level"/>
 
     <EditTextPreference
+        android:dependency="reduce_dim_light_changes"
+        android:key="minimum_brightness"
+        android:title="Minimum Light Brightness"
+        android:summary="0-65535"
+        android:maxLength="5"
+        android:numeric="integer"
+        android:defaultValue="@string/default_minimum_brightness"/>
+
+   <EditTextPreference
         android:key="white_temperature"
         android:title="White Temperature"
         android:summary="Temperature in Kelvin"
@@ -25,4 +35,48 @@
         android:numeric="integer"
         android:maxLength="3"
         android:defaultValue="@string/default_minimum_color_dominance"/>
+
+    <EditTextPreference
+        android:key="unicast_ip"
+        android:title="Unicast IP"
+        android:summary="IP address of light to control. If blank, multicast is used."
+        />
+
+    <SwitchPreference
+        android:key="enable_color_region"
+        android:title="Specify Screen Region"
+        android:summary="Process only part of the screen for dominant color"/>
+
+    <EditTextPreference
+        android:dependency="enable_color_region"
+        android:key="color_region_left"
+        android:title="Left Edge"
+        android:summary="0-100%"
+        android:maxLength="3"
+        android:numeric="integer"
+        android:defaultValue="@string/default_color_region_left"/>
+    <EditTextPreference
+        android:dependency="enable_color_region"
+        android:key="color_region_right"
+        android:title="Right Edge"
+        android:summary="0-100%"
+        android:maxLength="3"
+        android:numeric="integer"
+        android:defaultValue="@string/default_color_region_right"/>
+    <EditTextPreference
+        android:dependency="enable_color_region"
+        android:key="color_region_top"
+        android:title="Top Edge"
+        android:summary="0-100%"
+        android:maxLength="3"
+        android:numeric="integer"
+        android:defaultValue="@string/default_color_region_top"/>
+    <EditTextPreference
+        android:dependency="enable_color_region"
+        android:key="color_region_bottom"
+        android:title="Bottom Edge"
+        android:summary="0-100%"
+        android:maxLength="3"
+        android:numeric="integer"
+        android:defaultValue="@string/default_color_region_bottom"/>
 </PreferenceScreen>

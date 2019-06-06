@@ -14,4 +14,9 @@
     <string name="no_lights_found">No lights found on this network</string>
     <string name="default_white_temperature">5500</string>
     <string name="default_minimum_color_dominance">99</string>
+    <string name="default_minimum_brightness">2000</string>
+    <string name="default_color_region_left">0</string>
+    <string name="default_color_region_right">100</string>
+    <string name="default_color_region_top">0</string>
+    <string name="default_color_region_bottom">100</string>
 </resources>

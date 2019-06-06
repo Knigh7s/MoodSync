@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 import com.squareup.otto.Subscribe;
 
@@ -17,6 +18,7 @@ import cz.destil.moodsync.activity.MainActivity;
 import cz.destil.moodsync.core.App;
 import cz.destil.moodsync.core.Config;
 import cz.destil.moodsync.event.LocalColorEvent;
+import cz.destil.moodsync.event.PreferenceEvent;
 import cz.destil.moodsync.light.ColorExtractor;
 import cz.destil.moodsync.light.LightsController;
 import cz.destil.moodsync.light.LocalColorSwitcher;
@@ -34,6 +36,7 @@ public class LightsService extends Service {
     private LightsController mLights;
     private WifiManager.MulticastLock mMulticastLock;
     private LocalColorSwitcher mLocalSwitcher;
+    private String mUnicastIP = "";
 
 
     @Override
@@ -75,18 +78,16 @@ public class LightsService extends Service {
                 .mirroring)).setContentText(getString(R.string.tap_to_change))
                 .setContentIntent(pi).build();
         startForeground(42, notification);
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        mLights.reduceDimLightChanges( sharedPreferences.getBoolean("reduce_dim_light_changes",false));
-        mColorExtractor.ignoreBlackLines( sharedPreferences.getBoolean("ignore_black_lines",false));
-
-        if(Config.UNICAST_IP != "") {
+        updatePreferences();
+        if(mUnicastIP == "") {
             WifiManager wifi;
             wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             mMulticastLock = wifi.createMulticastLock("lifx");
             mMulticastLock.acquire();
+        } else {
+            mLights.unicastIP(mUnicastIP);
         }
-        mLights.minimumColorDominance( Integer.valueOf(sharedPreferences.getString("minimum_color_dominance",getString(R.string.default_minimum_color_dominance))));
-        mLights.whiteTemperature( Integer.valueOf(sharedPreferences.getString("white_temperature",getString(R.string.default_white_temperature))));
+
         mLights.start();
 
         mColorExtractor.start(mMirroring, new ColorExtractor.Listener() {
@@ -97,6 +98,22 @@ public class LightsService extends Service {
                 }
             }
         });
+    }
+
+    private void updatePreferences() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        mLights.reduceDimLightChanges(sharedPreferences.getBoolean("reduce_dim_light_changes", false));
+        mColorExtractor.ignoreBlackLines(sharedPreferences.getBoolean("ignore_black_lines", false));
+        mUnicastIP = sharedPreferences.getString("unicast_ip", "");
+        mLights.minimumBrightness(Integer.valueOf(sharedPreferences.getString("minimum_brightness", getString(R.string.default_minimum_brightness))));
+        mLights.minimumColorDominance(Integer.valueOf(sharedPreferences.getString("minimum_color_dominance", getString(R.string.default_minimum_color_dominance))));
+        mLights.whiteTemperature(Integer.valueOf(sharedPreferences.getString("white_temperature", getString(R.string.default_white_temperature))));
+        if (sharedPreferences.getBoolean("enable_color_region", false)) {
+            mColorExtractor.colorRegionLeft(Integer.valueOf(sharedPreferences.getString("color_region_left", getString(R.string.default_color_region_left))));
+            mColorExtractor.colorRegionRight(Integer.valueOf(sharedPreferences.getString("color_region_right", getString(R.string.default_color_region_right))));
+            mColorExtractor.colorRegionTop(Integer.valueOf(sharedPreferences.getString("color_region_top", getString(R.string.default_color_region_top))));
+            mColorExtractor.colorRegionBottom(Integer.valueOf(sharedPreferences.getString("color_region_bottom", getString(R.string.default_color_region_bottom))));
+        }
     }
 
     private void stop() {
@@ -119,5 +136,10 @@ public class LightsService extends Service {
     @Subscribe
     public void onNewLocalColor(LocalColorEvent event) {
         mLights.changeColor(event.newColor,255);
+    }
+
+    @Subscribe
+    public void onPreferencesUpdated(PreferenceEvent event){
+        updatePreferences();
     }
 }

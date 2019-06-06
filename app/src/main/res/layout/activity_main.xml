@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:text="settings"
                 android:textSize="18sp"
-                android:padding="6dp"
+                android:padding="10dp"
                 android:layout_gravity="center"
                 android:id="@+id/settings"/>
                 />

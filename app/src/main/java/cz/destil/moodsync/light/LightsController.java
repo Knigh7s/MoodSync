@@ -35,6 +35,8 @@ public class LightsController {
     private boolean mReduceDimLightChanges = false;
     private int mWhiteTemperature = 5500;
     private int mMinimumColorDominance = 0;
+    private String mUnicastIP = "";
+    private int mMinimumBrightness = 0;
 
     public static LightsController get() {
         if (sInstance == null) {
@@ -47,8 +49,16 @@ public class LightsController {
         mReduceDimLightChanges = reduceDimLightChanges;
     }
 
+    public void minimumBrightness(int minimumBrightness){
+        mMinimumBrightness = minimumBrightness;
+    }
+
     public void whiteTemperature(int whiteTemperature){
         mWhiteTemperature = whiteTemperature;
+    }
+
+    public void unicastIP(String unicastIP){
+        mUnicastIP = unicastIP;
     }
 
     public void minimumColorDominance(int minimumColorDominance){
@@ -65,12 +75,12 @@ public class LightsController {
             setWaveform.setWaveform(Waveforms.HALF_SINE);
             Command changeColor = new Command(setWaveform);
             try {
-                switch(Config.UNICAST_IP){
+                switch(mUnicastIP){
                     case "":
                 ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
                         break;
                     default:
-                        ControlMethods.sendUdpMessage(changeColor.getByteArray(),Config.UNICAST_IP,port);
+                        ControlMethods.sendUdpMessage(changeColor.getByteArray(),mUnicastIP,port);
                         break;
                 }
             } catch(IOException e) {
@@ -91,12 +101,12 @@ public class LightsController {
         SetPower_Light setPower = new SetPower_Light(Power.ON);
         Command powerOn = new Command(setPower);
         try {
-            switch(Config.UNICAST_IP){
+            switch(mUnicastIP){
                 case "":
                     ControlMethods.sendBroadcastMessage(powerOn.getByteArray(), port);
                     break;
                 default:
-                    ControlMethods.sendUdpMessage(powerOn.getByteArray(),Config.UNICAST_IP,port);
+                    ControlMethods.sendUdpMessage(powerOn.getByteArray(),mUnicastIP,port);
                     break;
             }
         } catch(Exception e) {
@@ -150,10 +160,10 @@ public class LightsController {
         }
 
         if(mReduceDimLightChanges) {
-            if (brightness  < Config.MINIMUM_BRIGHTNESS) { //prevent light flickering at low brightness
+            if (brightness  < mMinimumBrightness) { //prevent light flickering at low brightness
                 hsv[0] = 0.14f;
                 hsv[1] = 0.0f;
-                brightness = Config.MINIMUM_BRIGHTNESS;
+                brightness = mMinimumBrightness;
             } else {
                 float saturationModifier = Math.min(5*(brightness/65535f),1);
                 hsv[1] = hsv[1]*saturationModifier; //desaturate dimmer lights
@@ -180,14 +190,14 @@ public class LightsController {
         SetPower_Light setPower = new SetPower_Light(Power.OFF);
         Command powerOff = new Command(setPower);
         try {
-            switch(Config.UNICAST_IP){
+            switch(mUnicastIP){
                 case "":
                     ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
                     ControlMethods.sendBroadcastMessage(powerOff.getByteArray(), port);
                     break;
                 default:
-                    ControlMethods.sendUdpMessage(changeColor.getByteArray(),Config.UNICAST_IP,port);
-                    ControlMethods.sendUdpMessage(powerOff.getByteArray(),Config.UNICAST_IP,port);
+                    ControlMethods.sendUdpMessage(changeColor.getByteArray(),mUnicastIP,port);
+                    ControlMethods.sendUdpMessage(powerOff.getByteArray(),mUnicastIP,port);
                     break;
             }
         } catch(IOException e) {
@@ -212,12 +222,12 @@ public class LightsController {
             Command serviceCommand = new Command(getService);
             serviceCommand.getFrame().setTagged(true);
             try {
-                switch(Config.UNICAST_IP){
+                switch(mUnicastIP){
                     case "":
                 ControlMethods.sendBroadcastMessage(serviceCommand.getByteArray(), port);
                         break;
                     default:
-                        ControlMethods.sendUdpMessage(serviceCommand.getByteArray(),Config.UNICAST_IP,port);
+                        ControlMethods.sendUdpMessage(serviceCommand.getByteArray(),mUnicastIP,port);
                         break;
                 }
 

@@ -16,6 +16,10 @@ public class ColorExtractor {
     private static ColorExtractor sInstance;
     private boolean mRunning = true;
     private boolean mIgnoreBlackLines = false;
+    private int mColorRegionLeft = 0;
+    private int mColorRegionRight = Config.VIRTUAL_DISPLAY_WIDTH;
+    private int mColorRegionTop = 0;
+    private int mColorRegionBottom = Config.VIRTUAL_DISPLAY_HEIGHT;
 
     public static ColorExtractor get() {
         if (sInstance == null) {
@@ -38,6 +42,22 @@ public class ColorExtractor {
         mIgnoreBlackLines = ignoreBlackLines;
     }
 
+    public void colorRegionLeft(int colorRegionLeft){
+        mColorRegionLeft = Math.round(Config.VIRTUAL_DISPLAY_WIDTH*colorRegionLeft/100f);
+    }
+
+    public void colorRegionRight(int colorRegionRight){
+        mColorRegionRight = Math.round(Config.VIRTUAL_DISPLAY_WIDTH*colorRegionRight/100f);
+    }
+
+    public void colorRegionTop(int colorRegionTop){
+        mColorRegionTop = Math.round(Config.VIRTUAL_DISPLAY_HEIGHT*colorRegionTop/100f);
+    }
+
+    public void colorRegionBottom(int colorRegionBottom){
+        mColorRegionBottom = Math.round(Config.VIRTUAL_DISPLAY_HEIGHT*colorRegionBottom/100f);
+    }
+
     private void extractBitmap(final MirroringHelper mirroring, final Listener listener) {
         if (mRunning) {
             mirroring.getLatestBitmap(new MirroringHelper.Listener() {
@@ -46,7 +66,7 @@ public class ColorExtractor {
                     final Bitmap bitmapCopy = bitmap.copy(bitmap.getConfig(),true);
                     ColorThiefAsync
                             .from(bitmapCopy)
-                            .setRegion(Config.COLOR_REGION_LEFT,Config.COLOR_REGION_TOP,Config.COLOR_REGION_RIGHT,Config.COLOR_REGION_BOTTOM)
+                            .setRegion(mColorRegionLeft,mColorRegionTop,mColorRegionRight,mColorRegionBottom)
                             .ignoreBlackLines(mIgnoreBlackLines)
                             .getDominantColor(new ColorThiefAsync.ColorThiefAsyncListener(){
                                 @Override
