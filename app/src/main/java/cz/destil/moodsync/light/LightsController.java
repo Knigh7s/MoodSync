@@ -1,16 +1,18 @@
 package cz.destil.moodsync.light;
 
 import java.io.IOException;
+import java.util.Arrays;
 
-import com.lifx.LifxCommander.ControlMethods;
-import com.lifx.LifxCommander.ReceiveMessages;
-import com.lifx.Messages.DataTypes.Command;
-import com.lifx.Messages.DataTypes.HSBK;
-import com.lifx.Messages.Device.GetService;
-import com.lifx.Messages.Light.SetPower_Light;
-import com.lifx.Messages.Light.SetWaveform;
-import com.lifx.Values.Power;
-import com.lifx.Values.Waveforms;
+import olsenn1.LifxCommander.ControlMethods;
+import olsenn1.LifxCommander.ReceiveMessages;
+import olsenn1.Messages.DataTypes.Command;
+import olsenn1.Messages.DataTypes.HSBK;
+import olsenn1.Messages.Device.GetService;
+import olsenn1.Messages.Light.SetPower_Light;
+import olsenn1.Messages.Light.SetWaveform;
+import olsenn1.Messages.Light.SetColor;
+import olsenn1.Values.Power;
+import olsenn1.Values.Waveforms;
 
 import android.graphics.Color;
 import android.os.StrictMode;
@@ -29,6 +31,7 @@ public class LightsController {
     private static final int TIMEOUT = 5000;
     private static LightsController sInstance;
     private boolean mWorkingFine;
+    private Integer[][] mPreviousColors;
     private boolean mDisconnected;
     private int mPreviousColor = -1;
     private int port = 56700;
@@ -65,6 +68,34 @@ public class LightsController {
         mMinimumColorDominance = minimumColorDominance;
     }
 
+    public void changeColors(Integer[][] extractedColors){
+        if (mWorkingFine){
+            int numColors = extractedColors.length;
+            HSBK colors[] = new HSBK[numColors];
+
+            for (int i=0; i<extractedColors.length; i++) {
+                mPreviousColor = mPreviousColors[i][0];
+                colors[i] = convertColor(extractedColors[i][0],extractedColors[i][1]);
+            }
+            SetColor setColor = new SetColor(colors,Config.DURATION_OF_COLOR_CHANGE,Config.MULTIZONE_DIRECTION);
+            Command changeColor = new Command(setColor);
+
+            try {
+                switch(mUnicastIP){
+                    case "":
+                        ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
+                        break;
+                    default:
+                        ControlMethods.sendUdpMessage(changeColor.getByteArray(),mUnicastIP,port);
+                        break;
+                }
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+            mPreviousColors = extractedColors;
+        }
+    }
+
     public void changeColor(int color, int overallBrightness) {
         if (mWorkingFine && color != mPreviousColor) {
             SetWaveform setWaveform = new SetWaveform();
@@ -93,6 +124,10 @@ public class LightsController {
     public void init() {
         mWorkingFine = false;
         mDisconnected = false;
+        mPreviousColors = new Integer[Config.MULTIZONE_REGIONS][2];
+        for (Integer[] row : mPreviousColors){
+            Arrays.fill(row,0);
+        }
     }
 
     private void startRocking() {
@@ -169,6 +204,8 @@ public class LightsController {
                 hsv[1] = hsv[1]*saturationModifier; //desaturate dimmer lights
             }
         }
+        hsv[1] = hsv[1]*Config.SATURATION;
+
         HSBK hsbk2 = new HSBK();
         hsbk2.setHue(Math.round(hsv[0] * 182));
         hsbk2.setSaturation(Math.round(hsv[1] * 65535));
