@@ -67,8 +67,10 @@ public class ColorExtractor {
                     ColorThiefAsync
                             .from(bitmapCopy)
                             .setRegion(mColorRegionLeft,mColorRegionTop,mColorRegionRight,mColorRegionBottom)
+                            .setNumRegions(Config.MULTIZONE_REGIONS)
                             .ignoreBlackLines(mIgnoreBlackLines)
-                            .getDominantColor(new ColorThiefAsync.ColorThiefAsyncListener(){
+                            .getDominantColors(new ColorThiefAsync.ColorThiefAsyncListener(){
+/*
                                 @Override
                                 public void onColorExtracted(Integer color, Integer overallBrightness) {
                                     bitmapCopy.recycle();
@@ -80,6 +82,21 @@ public class ColorExtractor {
                                         }
                                     }).start();
                                 }
+                                public void onColorsExtracted(Integer[][] extractedData) { return; }
+                                */
+                                @Override
+                                public void onColorsExtracted(Integer[][] extractedData) {
+                                    bitmapCopy.recycle();
+                                    listener.onColorsExtracted(extractedData);
+                                    new SleepTask(Config.FREQUENCE_OF_SCREENSHOTS, new SleepTask.Listener() {
+                                        @Override
+                                        public void awoken() {
+                                            extractBitmap(mirroring, listener);
+                                        }
+                                    }).start();
+                                }
+                                @Override
+                                public void onColorExtracted(Integer color, Integer overallBrightness) { return;}
                             });
                 }
             });
@@ -92,5 +109,6 @@ public class ColorExtractor {
 
     public interface Listener {
         public void onColorExtracted(int color, int overallBrightness);
+        public void onColorsExtracted(Integer[][] extractedData);
     }
 }

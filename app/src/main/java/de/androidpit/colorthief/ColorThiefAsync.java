@@ -20,6 +20,7 @@ public class ColorThiefAsync {
         private Rect mRegion;
         private Integer mOverallBrightness = 0;
         private boolean mIgnoreBlackLines = false;
+        private Integer mNumRegions = 1;
 
         public Builder(Bitmap bitmap) {
             if (bitmap == null || bitmap.isRecycled()) {
@@ -55,13 +56,22 @@ public class ColorThiefAsync {
             return mOverallBrightness;
         }
 
+        public Builder setNumRegions(int numRegions){
+            mNumRegions = numRegions;
+            return this;
+        }
+
         @NonNull
-        public Integer getDominantColor() {
+        public Integer getDominantColor(){
+            return getDominantColor(mRegion);
+        }
+
+        @NonNull
+        public Integer getDominantColor(Rect region) {
             if (mBitmap != null) {
                 Bitmap bitmap = mBitmap;
-                Rect region = mRegion;
 
-                int[][] palette = ColorThief.getWPalette(bitmap,region,5,1,false,mIgnoreBlackLines);
+                int[][] palette = ColorThief.getWPalette(bitmap,region,Config.POSTERIZE_LEVELS,1,false,mIgnoreBlackLines);
 
                 int overallBrightness = 0;
 
@@ -138,6 +148,41 @@ public class ColorThiefAsync {
                 }
             }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mBitmap);
         }
+
+        @NonNull
+        public AsyncTask<Bitmap, Void, Integer[][]> getDominantColors(final ColorThiefAsyncListener listener) {
+            if (listener == null) {
+                throw new IllegalArgumentException("listener can not be null");
+            }
+
+
+            return new AsyncTask<Bitmap, Void, Integer[][]>() {
+                @Override
+                protected Integer[][] doInBackground(Bitmap... bitmap) {
+                    try {
+                        Integer[][] result = new Integer[mNumRegions][2];
+                        int width = mRegion.width() / mNumRegions;
+                        for (int i=0;i<mNumRegions;i++) {
+                            Rect region = new Rect();
+                            int left = mRegion.left + (i*width);
+                            int right = left + width;
+                            region.set(left , mRegion.top, right, mRegion.bottom);
+                            result[i][0] = getDominantColor(region);
+                            result[i][1] = getOverallBrightness();
+                        }
+                        return result;
+                    } catch (Exception e) {
+                        Log.e(LOG_TAG, "Exception thrown during async generate", e);
+                        return null;
+                    }
+                }
+
+                @Override
+                protected void onPostExecute(Integer[][] result) {
+                    listener.onColorsExtracted(result);
+                }
+            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mBitmap);
+        }
     }
     public interface ColorThiefAsyncResponse {
         void processFinish(Integer result);
@@ -145,6 +190,7 @@ public class ColorThiefAsync {
 
     public interface ColorThiefAsyncListener {
         void onColorExtracted(Integer color, Integer overallBrightness);
+        void onColorsExtracted(Integer[][] extractedData);
     }
 
     public ColorThiefAsyncResponse delegate = null;//Call back interface

@@ -91,12 +91,27 @@ public class LightsService extends Service {
         mLights.start();
 
         mColorExtractor.start(mMirroring, new ColorExtractor.Listener() {
+            /*
             @Override
             public void onColorExtracted(int color, int overallBrightness) {
                 if (!mLocalSwitcher.isRunning()) {
                     mLights.changeColor(color, overallBrightness);
                 }
             }
+            public void onColorsExtracted(Integer[][] extractedColors){
+                return;
+            }*/
+
+            @Override
+            public void onColorExtracted(int color, int overallBrightness) { return;}
+
+            @Override
+            public void onColorsExtracted(Integer[][] extractedColors) {
+                if (!mLocalSwitcher.isRunning()) {
+                    mLights.changeColors(extractedColors);
+                }
+            }
+
         });
     }
 
@@ -135,7 +150,13 @@ public class LightsService extends Service {
 
     @Subscribe
     public void onNewLocalColor(LocalColorEvent event) {
-        mLights.changeColor(event.newColor,255);
+        Integer colors[][]  = new Integer[16][2];
+        for(int i=0; i<16; i++) {
+            colors[i][0] = event.newColor;
+            colors[i][1] = 255;
+        }
+        //mLights.changeColor(event.newColor,255);
+        mLights.changeColors(colors);
     }
 
     @Subscribe

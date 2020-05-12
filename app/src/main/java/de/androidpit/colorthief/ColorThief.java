@@ -221,7 +221,7 @@ public class ColorThief {
         int height = region.bottom-region.top;
         int[] pixels = new int[width*height];
 
-        sourceImage.getPixels(pixels, 0, width, 0, 0, width, height);
+        sourceImage.getPixels(pixels, 0, width, region.left, region.top, width, height);
         int pixelCount = width * height;
 
 
