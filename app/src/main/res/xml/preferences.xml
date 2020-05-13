@@ -79,4 +79,36 @@
         android:maxLength="3"
         android:numeric="integer"
         android:defaultValue="@string/default_color_region_bottom"/>
+    <EditTextPreference
+        android:defaultValue="255"
+        android:key="red_calibration"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:numeric="integer"
+        android:title="Red Calibration"
+        android:summary="0-255"/>
+    <EditTextPreference
+        android:defaultValue="255"
+        android:key="blue_calibration"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:numeric="integer"
+        android:title="Blue Calibration"
+        android:summary="0-255"/>
+    <EditTextPreference
+        android:defaultValue="255"
+        android:key="green_calibration"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:numeric="integer"
+        android:title="Green Calibration"
+        android:summary="0-255"/>
+    <EditTextPreference
+        android:defaultValue="255"
+        android:key="saturation"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:numeric="integer"
+        android:title="Saturation"
+        android:summary="0-255"/>
 </PreferenceScreen>

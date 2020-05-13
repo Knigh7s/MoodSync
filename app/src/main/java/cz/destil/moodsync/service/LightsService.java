@@ -129,6 +129,10 @@ public class LightsService extends Service {
             mColorExtractor.colorRegionTop(Integer.valueOf(sharedPreferences.getString("color_region_top", getString(R.string.default_color_region_top))));
             mColorExtractor.colorRegionBottom(Integer.valueOf(sharedPreferences.getString("color_region_bottom", getString(R.string.default_color_region_bottom))));
         }
+        mLights.redCalibration(Integer.valueOf(sharedPreferences.getString("red_calibration","255")));
+        mLights.blueCalibration(Integer.valueOf(sharedPreferences.getString("blue_calibration","255")));
+        mLights.greenCalibration(Integer.valueOf(sharedPreferences.getString("green_calibration","255")));
+        mLights.saturation(Integer.valueOf(sharedPreferences.getString("saturation","255")));
     }
 
     private void stop() {

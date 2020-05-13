@@ -40,6 +40,10 @@ public class LightsController {
     private int mMinimumColorDominance = 0;
     private String mUnicastIP = "";
     private int mMinimumBrightness = 0;
+    private float mRedMultiplier = 1.0f;
+    private float mGreenMultiplier = 1.0f;
+    private float mBlueMultiplier = 1.0f;
+    private float mSaturation = 1.0f;
 
     public static LightsController get() {
         if (sInstance == null) {
@@ -67,6 +71,20 @@ public class LightsController {
     public void minimumColorDominance(int minimumColorDominance){
         mMinimumColorDominance = minimumColorDominance;
     }
+
+    public void redCalibration(int red){
+        mRedMultiplier = red/255.0f;
+    }
+
+    public void greenCalibration(int green){
+        mGreenMultiplier = green/255.0f;
+    }
+
+    public void blueCalibration(int blue){
+        mBlueMultiplier = blue/255.0f;
+    }
+
+    public void saturation(int saturation) { mSaturation = saturation/255.0f; }
 
     public void changeColors(Integer[][] extractedColors){
         if (mWorkingFine){
@@ -177,7 +195,10 @@ public class LightsController {
             color = mPreviousColor;
         }
 
-        Color.RGBToHSV(Color.red(color),Color.green(color),Color.blue(color), hsv);
+        int red = Math.round(Color.red(color)*mRedMultiplier);
+        int green = Math.round(Color.green(color)*mGreenMultiplier);
+        int blue = Math.round(Color.blue(color)*mBlueMultiplier);
+        Color.RGBToHSV(red,green,blue, hsv);
         float brightness;
         switch (Config.BRIGHTNESS_MODE) {
             case Config.BRIGHTNESS_STATIC:
@@ -204,7 +225,7 @@ public class LightsController {
                 hsv[1] = hsv[1]*saturationModifier; //desaturate dimmer lights
             }
         }
-        hsv[1] = hsv[1]*Config.SATURATION;
+        hsv[1] = hsv[1]*mSaturation;
 
         HSBK hsbk2 = new HSBK();
         hsbk2.setHue(Math.round(hsv[0] * 182));

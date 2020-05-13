@@ -14,7 +14,6 @@ public class Config {
     public static final int DURATION_OF_COLOR_CHANGE = 400; // in ms
     public static final int LIFX_BRIGHTNESS = Levels.MAX; // 0-65535
     public static final int POSTERIZE_LEVELS = 5;
-    public static final float SATURATION = 0.6f; //0-1
     public static final int VIRTUAL_DISPLAY_WIDTH = 320; // in px - default of 150x84 is approximately the pixel count google's palette routine uses
     public static final int VIRTUAL_DISPLAY_HEIGHT = 180; // in px
     public static final int MULTIZONE_REGIONS = 16;
