@@ -9,10 +9,9 @@
     <SwitchPreference
         android:key="reduce_dim_light_changes"
         android:title="Reduce dim light changes"
-        android:summary="Desaturate colors as brightness decreases and maintain minimum light level"/>
+        android:summary="Desaturate colors as brightness decreases"/>
 
     <EditTextPreference
-        android:dependency="reduce_dim_light_changes"
         android:key="minimum_brightness"
         android:title="Minimum Light Brightness"
         android:summary="0-65535"

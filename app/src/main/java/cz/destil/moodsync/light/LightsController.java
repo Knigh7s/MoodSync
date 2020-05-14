@@ -219,11 +219,13 @@ public class LightsController {
             if (brightness  < mMinimumBrightness) { //prevent light flickering at low brightness
                 hsv[0] = 0.14f;
                 hsv[1] = 0.0f;
-                brightness = mMinimumBrightness;
             } else {
                 float saturationModifier = Math.min(5*(brightness/65535f),1);
                 hsv[1] = hsv[1]*saturationModifier; //desaturate dimmer lights
             }
+        }
+        if (brightness < mMinimumBrightness){
+            brightness = mMinimumBrightness;
         }
         hsv[1] = hsv[1]*mSaturation;
 
