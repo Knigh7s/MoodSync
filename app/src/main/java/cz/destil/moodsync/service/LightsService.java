@@ -3,8 +3,10 @@ package cz.destil.moodsync.service;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
@@ -23,6 +25,7 @@ import cz.destil.moodsync.light.ColorExtractor;
 import cz.destil.moodsync.light.LightsController;
 import cz.destil.moodsync.light.LocalColorSwitcher;
 import cz.destil.moodsync.light.MirroringHelper;
+import cz.destil.moodsync.util.ScreenReceiver;
 import cz.destil.moodsync.util.SleepTask;
 
 /**
@@ -37,6 +40,7 @@ public class LightsService extends Service {
     private WifiManager.MulticastLock mMulticastLock;
     private LocalColorSwitcher mLocalSwitcher;
     private String mUnicastIP = "";
+    private ScreenReceiver mScreenReceiver;
 
 
     @Override
@@ -52,20 +56,34 @@ public class LightsService extends Service {
         mLights = LightsController.get();
         mLocalSwitcher = LocalColorSwitcher.get();
         App.bus().register(this);
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        mScreenReceiver = new ScreenReceiver();
+        registerReceiver(mScreenReceiver, filter);
     }
 
     @Override
     public void onDestroy() {
+        unregisterReceiver(mScreenReceiver);
         App.bus().unregister(this);
         super.onDestroy();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction().equals("START")) {
-            start();
-        } else if (intent.getAction().equals("STOP")) {
-            stop();
+        switch (intent.getAction()) {
+            case "START":
+                start();
+                break;
+            case "STOP":
+                stop();
+                break;
+            case "PAUSE":
+                pause();
+                break;
+            case "RESUME":
+                resume();
+                break;
         }
         return START_REDELIVER_INTENT;
     }
@@ -88,31 +106,7 @@ public class LightsService extends Service {
             mLights.unicastIP(mUnicastIP);
         }
 
-        mLights.start();
-
-        mColorExtractor.start(mMirroring, new ColorExtractor.Listener() {
-            /*
-            @Override
-            public void onColorExtracted(int color, int overallBrightness) {
-                if (!mLocalSwitcher.isRunning()) {
-                    mLights.changeColor(color, overallBrightness);
-                }
-            }
-            public void onColorsExtracted(Integer[][] extractedColors){
-                return;
-            }*/
-
-            @Override
-            public void onColorExtracted(int color, int overallBrightness) { return;}
-
-            @Override
-            public void onColorsExtracted(Integer[][] extractedColors) {
-                if (!mLocalSwitcher.isRunning()) {
-                    mLights.changeColors(extractedColors);
-                }
-            }
-
-        });
+        resume();
     }
 
     private void updatePreferences() {
@@ -135,6 +129,39 @@ public class LightsService extends Service {
         mLights.saturation(Integer.valueOf(sharedPreferences.getString("saturation","255")));
     }
 
+    private void pause() {
+        mColorExtractor.stop();
+        mLights.signalStop();
+    }
+
+    private void resume() {
+        mLights.start();
+        mColorExtractor.start(mMirroring, new ColorExtractor.Listener() {
+/*
+            @Override
+            public void onColorExtracted(int color, int overallBrightness) {
+                if (!mLocalSwitcher.isRunning()) {
+                    mLights.changeColor(color, overallBrightness);
+                }
+            }
+            public void onColorsExtracted(Integer[][] extractedColors){
+                return;
+            }*/
+
+            @Override
+            public void onColorExtracted(int color, int overallBrightness) { return;}
+
+            @Override
+            public void onColorsExtracted(Integer[][] extractedColors) {
+                if (!mLocalSwitcher.isRunning()) {
+                    mLights.changeColors(extractedColors);
+                }
+            }
+
+        });
+
+    }
+
     private void stop() {
         mColorExtractor.stop();
         mMirroring.stop();
@@ -154,7 +181,7 @@ public class LightsService extends Service {
 
     @Subscribe
     public void onNewLocalColor(LocalColorEvent event) {
-        Integer colors[][]  = new Integer[16][2];
+                Integer colors[][]  = new Integer[16][2];
         for(int i=0; i<16; i++) {
             colors[i][0] = event.newColor;
             colors[i][1] = 255;
