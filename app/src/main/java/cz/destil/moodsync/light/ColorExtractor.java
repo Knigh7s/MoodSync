@@ -20,6 +20,7 @@ public class ColorExtractor {
     private int mColorRegionRight = Config.VIRTUAL_DISPLAY_WIDTH;
     private int mColorRegionTop = 0;
     private int mColorRegionBottom = Config.VIRTUAL_DISPLAY_HEIGHT;
+    private int mSampleInterval = 50;
 
     public static ColorExtractor get() {
         if (sInstance == null) {
@@ -58,6 +59,10 @@ public class ColorExtractor {
         mColorRegionBottom = Math.round(Config.VIRTUAL_DISPLAY_HEIGHT*colorRegionBottom/100f);
     }
 
+    public void sampleInterval(int intverval){
+        mSampleInterval = intverval;
+    }
+
     private void extractBitmap(final MirroringHelper mirroring, final Listener listener) {
         if (mRunning) {
             mirroring.getLatestBitmap(new MirroringHelper.Listener() {
@@ -88,7 +93,7 @@ public class ColorExtractor {
                                 public void onColorsExtracted(Integer[][] extractedData) {
                                     bitmapCopy.recycle();
                                     listener.onColorsExtracted(extractedData);
-                                    new SleepTask(Config.FREQUENCE_OF_SCREENSHOTS, new SleepTask.Listener() {
+                                    new SleepTask(mSampleInterval, new SleepTask.Listener() {
                                         @Override
                                         public void awoken() {
                                             extractBitmap(mirroring, listener);

@@ -127,6 +127,10 @@ public class LightsService extends Service {
         mLights.blueCalibration(Integer.valueOf(sharedPreferences.getString("blue_calibration","255")));
         mLights.greenCalibration(Integer.valueOf(sharedPreferences.getString("green_calibration","255")));
         mLights.saturation(Integer.valueOf(sharedPreferences.getString("saturation","255")));
+        mLights.transitionDuration(Integer.valueOf(sharedPreferences.getString("transition_duration","400")));
+        mColorExtractor.sampleInterval(Integer.valueOf(sharedPreferences.getString("sample_interval","50")));
+        mLights.alternateInterpolation(sharedPreferences.getBoolean("alternate_interpolation", false));
+        mLights.sampleInterval(Integer.valueOf(sharedPreferences.getString("sample_interval","50")));
     }
 
     private void pause() {

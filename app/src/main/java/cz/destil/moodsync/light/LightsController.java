@@ -3,6 +3,7 @@ package cz.destil.moodsync.light;
 import java.io.IOException;
 import java.util.Arrays;
 
+import cz.destil.moodsync.util.SleepTask;
 import olsenn1.LifxCommander.ControlMethods;
 import olsenn1.LifxCommander.ReceiveMessages;
 import olsenn1.Messages.DataTypes.Command;
@@ -44,6 +45,10 @@ public class LightsController {
     private float mGreenMultiplier = 1.0f;
     private float mBlueMultiplier = 1.0f;
     private float mSaturation = 1.0f;
+    private int mDuration = 400;
+    private HSBK[] mPreviousHSBKColors;
+    private boolean mAlternateInterpolation = false;
+    private int mSampleInterval = 50;
 
     public static LightsController get() {
         if (sInstance == null) {
@@ -84,33 +89,101 @@ public class LightsController {
         mBlueMultiplier = blue/255.0f;
     }
 
+    public void transitionDuration(int duration){
+        mDuration = duration;
+    }
+
+    public void alternateInterpolation(boolean alternateInterpolation){
+        mAlternateInterpolation = alternateInterpolation;
+    }
+
+    public void sampleInterval(int sampleInterval){
+        mSampleInterval = sampleInterval;
+    }
+
     public void saturation(int saturation) { mSaturation = saturation/255.0f; }
 
     public void changeColors(Integer[][] extractedColors){
         if (mWorkingFine){
             int numColors = extractedColors.length;
             HSBK colors[] = new HSBK[numColors];
+            HSBK transitionColors[] = new HSBK[numColors];
+            int duration = mDuration;
+            boolean useInterpolatedColor = false;
 
             for (int i=0; i<extractedColors.length; i++) {
                 mPreviousColor = mPreviousColors[i][0];
                 colors[i] = convertColor(extractedColors[i][0],extractedColors[i][1]);
-            }
-            SetColor setColor = new SetColor(colors,Config.DURATION_OF_COLOR_CHANGE,Config.MULTIZONE_DIRECTION);
-            Command changeColor = new Command(setColor);
+                if(mAlternateInterpolation) {
+                    transitionColors[i] = new HSBK();
+                    int distance = distance(colors[i].getHue(), mPreviousHSBKColors[i].getHue());
 
-            try {
-                switch(mUnicastIP){
-                    case "":
-                        ControlMethods.sendBroadcastMessage(changeColor.getByteArray(), port);
-                        break;
-                    default:
-                        ControlMethods.sendUdpMessage(changeColor.getByteArray(),mUnicastIP,port);
-                        break;
+
+                    transitionColors[i].setKelvin(mWhiteTemperature);
+
+
+
+                    if (distance > 16384) {
+                        useInterpolatedColor = true;
+                        transitionColors[i].setHue(mPreviousHSBKColors[i].getHue());
+                        transitionColors[i].setSaturation(0);
+                        transitionColors[i].setBrightness((colors[i].getBrightness() + mPreviousHSBKColors[i].getBrightness()) / 4);
+                    } else {
+                        transitionColors[i].setBrightness((colors[i].getBrightness() + mPreviousHSBKColors[i].getBrightness()) / 2);
+                        int prevHue = mPreviousHSBKColors[i].getHue();
+                        int nextHue = colors[i].getHue();
+                        if ((prevHue + distance) % 65536 == nextHue) {
+                            transitionColors[i].setHue((prevHue + (distance/2)) % 65536);
+                        } else {
+                            transitionColors[i].setHue((prevHue - (distance/2)) % 65536);
+                        }
+                        transitionColors[i].setSaturation((colors[i].getSaturation() + mPreviousHSBKColors[i].getSaturation()) / 2);
+
+                    }
                 }
-            } catch(IOException e) {
-                e.printStackTrace();
+
+            }
+            if(useInterpolatedColor) {
+                duration = mDuration/2;
+                SetColor setIntermediateColor = new SetColor(transitionColors, duration, Config.MULTIZONE_DIRECTION);
+                Command intermediateColorCommand = new Command(setIntermediateColor);
+                sendColorCommand(intermediateColorCommand);
+                SetColor setColor = new SetColor(colors, duration, Config.MULTIZONE_DIRECTION);
+                final Command finalColorCommand = new Command(setColor);
+                new SleepTask(mSampleInterval / 2, new SleepTask.Listener() {
+                    @Override
+                    public void awoken() {
+                        sendColorCommand(finalColorCommand);
+                    }
+                }).start();
+            } else {
+                SetColor setColor = new SetColor(colors, duration, Config.MULTIZONE_DIRECTION);
+                Command colorCommand = new Command(setColor);
+                sendColorCommand(colorCommand);
             }
             mPreviousColors = extractedColors;
+            mPreviousHSBKColors = colors;
+        }
+    }
+
+    private int distance(int alpha, int beta) {
+        int phi = Math.abs(beta - alpha) % 65536;       // This is either the distance or 360 - distance
+        int distance = phi > 32786 ? 65536 - phi : phi;
+        return distance;
+    }
+
+    private void sendColorCommand(Command command){
+        try {
+            switch(mUnicastIP){
+                case "":
+                    ControlMethods.sendBroadcastMessage(command.getByteArray(), port);
+                    break;
+                default:
+                    ControlMethods.sendUdpMessage(command.getByteArray(),mUnicastIP,port);
+                    break;
+            }
+        } catch(IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -120,7 +193,7 @@ public class LightsController {
             setWaveform.setColor(convertColor(color,overallBrightness));
             setWaveform.setCycles(1);
             setWaveform.setIsTransient(false);
-            setWaveform.setPeriod(Config.DURATION_OF_COLOR_CHANGE);
+            setWaveform.setPeriod(mDuration);
             setWaveform.setWaveform(Waveforms.HALF_SINE);
             Command changeColor = new Command(setWaveform);
             try {
@@ -145,6 +218,10 @@ public class LightsController {
         mPreviousColors = new Integer[Config.MULTIZONE_REGIONS][2];
         for (Integer[] row : mPreviousColors){
             Arrays.fill(row,0);
+        }
+        mPreviousHSBKColors = new HSBK[Config.MULTIZONE_REGIONS];
+        for (int i=0; i<mPreviousHSBKColors.length; i++){
+            mPreviousHSBKColors[i] = convertColor(0,0);
         }
     }
 
