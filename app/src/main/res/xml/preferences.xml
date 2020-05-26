@@ -129,4 +129,34 @@
         android:singleLine="true"
         android:numeric="integer"
         android:title="Color transition duration (ms)"/>
+    <SwitchPreference
+        android:key="enable_brightness_schedule"
+        android:title="Dim brightness between certain hours"/>
+    <EditTextPreference
+        android:dependency="enable_brightness_schedule"
+        android:defaultValue="23"
+        android:key="dim_brightness_begin"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:numeric="integer"
+        android:title="Starting hour"
+        android:summary="0-23"/>
+    <EditTextPreference
+        android:dependency="enable_brightness_schedule"
+        android:defaultValue="6"
+        android:key="dim_brightness_end"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:numeric="integer"
+        android:title="Ending hour"
+        android:summary="0-23"/>
+    <EditTextPreference
+        android:dependency="enable_brightness_schedule"
+        android:defaultValue="23"
+        android:key="dimmed_brightness_level"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:numeric="integer"
+        android:title="Dimmed brightness level"
+        android:summary="0-255"/>
 </PreferenceScreen>

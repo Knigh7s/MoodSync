@@ -2,6 +2,7 @@ package cz.destil.moodsync.light;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.GregorianCalendar;
 
 import cz.destil.moodsync.util.SleepTask;
 import olsenn1.LifxCommander.ControlMethods;
@@ -49,6 +50,10 @@ public class LightsController {
     private HSBK[] mPreviousHSBKColors;
     private boolean mAlternateInterpolation = false;
     private int mSampleInterval = 50;
+    private boolean mBrightnessSchedule = false;
+    private int mDimBrightnessBegin = 23;
+    private int mDimBrightnessEnd = 6;
+    private int mDimBrightnessLevel = 128;
 
     public static LightsController get() {
         if (sInstance == null) {
@@ -102,6 +107,14 @@ public class LightsController {
     }
 
     public void saturation(int saturation) { mSaturation = saturation/255.0f; }
+
+    public void brightnessSchedule(boolean brightnessSchedule) { mBrightnessSchedule = brightnessSchedule; }
+
+    public void dimBrightnessBegin(int dimBrightnessBegin) { mDimBrightnessBegin = dimBrightnessBegin; }
+
+    public void dimBrightnessEnd(int dimBrightnessEnd) { mDimBrightnessEnd = dimBrightnessEnd; }
+
+    public void dimBrightnessLevel(int dimBrightnessLevel) { mDimBrightnessLevel = dimBrightnessLevel; }
 
     public void changeColors(Integer[][] extractedColors){
         if (mWorkingFine){
@@ -305,6 +318,19 @@ public class LightsController {
             brightness = mMinimumBrightness;
         }
         hsv[1] = hsv[1]*mSaturation;
+
+        if (mBrightnessSchedule){
+            int hour = GregorianCalendar.getInstance().get(GregorianCalendar.HOUR_OF_DAY);
+            if (mDimBrightnessBegin > mDimBrightnessEnd) {
+                if (hour < mDimBrightnessEnd || hour >= mDimBrightnessBegin){
+                    brightness = brightness * (mDimBrightnessLevel/255.0f);
+                }
+            } else {
+                if (hour >= mDimBrightnessBegin && hour < mDimBrightnessEnd){
+                    brightness = brightness * (mDimBrightnessLevel/255.0f);
+                }
+            }
+        }
 
         HSBK hsbk2 = new HSBK();
         hsbk2.setHue(Math.round(hsv[0] * 182));

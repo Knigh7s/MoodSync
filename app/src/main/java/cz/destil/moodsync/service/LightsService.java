@@ -131,6 +131,10 @@ public class LightsService extends Service {
         mColorExtractor.sampleInterval(Integer.valueOf(sharedPreferences.getString("sample_interval","50")));
         mLights.alternateInterpolation(sharedPreferences.getBoolean("alternate_interpolation", false));
         mLights.sampleInterval(Integer.valueOf(sharedPreferences.getString("sample_interval","50")));
+        mLights.brightnessSchedule(sharedPreferences.getBoolean("enable_brightness_schedule", false));
+        mLights.dimBrightnessBegin(Integer.valueOf(sharedPreferences.getString("dim_brightness_begin","23")));
+        mLights.dimBrightnessEnd(Integer.valueOf(sharedPreferences.getString("dim_brightness_end","6")));
+        mLights.dimBrightnessLevel(Integer.valueOf(sharedPreferences.getString("dimmed_brightness_level","128")));
     }
 
     private void pause() {
